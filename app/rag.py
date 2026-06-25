@@ -63,6 +63,13 @@ def retrieve(
     params = [qvec] + params + [qvec, top_k]
 
     with get_conn() as conn, conn.cursor() as cur:
+        # IVFFlat con probes=1 (default) tiene recall malo cuando hay filtros
+        # estructurados — el subset filtrado puede no estar en la lista que
+        # ivfflat exploró → devuelve 0 rows aunque haya matches.
+        # probes=100 fuerza explorar todas las listas (las creé con lists=100),
+        # que es virtualmente exact search. Costo: ~10-30ms más por query
+        # sobre 17k filas. Aceptable para este tamaño.
+        cur.execute("SET ivfflat.probes = 100;")
         cur.execute(sql, params)
         rows = cur.fetchall()
 
