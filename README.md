@@ -105,13 +105,27 @@ python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
 python -m scripts.ingest_corpus           # ~10s — copies metadata
-python -m scripts.generate_embeddings     # ~15-30 min on CPU (one-time)
+python -m scripts.generate_embeddings     # ~2-15 min depending on hardware (one-time)
 
+# API
 python -m uvicorn app.api:app --reload --port 8000
-# Swagger UI: http://localhost:8000/docs
+# Swagger UI:  http://localhost:8000/docs
+
+# Optional UI (in a separate terminal)
+streamlit run ui.py
+# Open:  http://localhost:8501
 ```
 
 Without the LenguaTrends source DB you can still run the stack — `ingest_corpus.py` is a no-op if the target is empty and there's no source. A small synthetic seed script is on the TODO list.
+
+### The UI
+
+`ui.py` is a small Streamlit front-end that talks to the API over HTTP. Two tabs:
+
+- **Trends** — open-ended questions about what users are saying. Picks a language, a top-K, and shows the synthesized answer plus the comments that fed into it.
+- **Recommend** — describe what you'd like to watch; get a ranked list with justifications anchored in real comments.
+
+The UI is intentionally a thin layer over the API — same calls you'd make from `curl`, just nicer to demo. Keeping it decoupled means I can swap the front-end without touching the retrieval/generation code.
 
 ## Repository layout
 
@@ -130,6 +144,7 @@ Without the LenguaTrends source DB you can still run the stack — `ingest_corpu
 │   ├── queries_test.json  # 8 test queries, 3 languages
 │   ├── eval_rag.py        # recall@k + LLM-as-judge
 │   └── results.json       # written by eval_rag.py
+├── ui.py                  # Streamlit front-end (talks to the API over HTTP)
 ├── docker-compose.yml     # postgres+pgvector
 ├── Dockerfile             # for the API container (optional)
 ├── requirements.txt
@@ -154,7 +169,7 @@ python -m eval.eval_rag --judge   # recall + judge (slower, ~3 min)
 - **Corpus is small and curated.** 15 movies, all recent blockbusters scraped from YouTube. Don't expect long-tail or niche recommendations.
 - **No multi-turn memory.** Each call is independent — there's no chat state. Adding it is a Demo #2 concern (LangGraph).
 - **Embeddings are static.** No re-embedding job; if new comments land in the source, you re-run `generate_embeddings.py`.
-- **The recommendation aggregation is naive.** Comments are aggregated per movie by hit-count; a better version would weight by similarity and adjust for sentiment skew.
+- **The recommendation aggregation is naive.** Comments are aggregated per movie by hit-count. A better version would (a) weight by similarity instead of counting, and (b) adjust for sentiment skew so a movie with mostly negative comments isn't recommended when the user asked for "a good one." Both changes are small; I left them out because validating the improvement requires re-running the eval, and the overall demo isn't bottlenecked on this.
 - **The `'other'`/`'unsupported'` language bucket is excluded from retrieval filtering** (~9% of the source corpus). Those comments are in the index, just not surfaced via `language=ru/es/en`.
 - **LLM-as-judge is the same family as the generator.** A different judge (e.g. GPT-4o-mini) would give a more honest read.
 

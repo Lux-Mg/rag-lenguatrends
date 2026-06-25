@@ -10,3 +10,5 @@ ollama==0.4.4
 python-dotenv==1.0.1
 pandas==2.2.3
 tqdm==4.67.1
+streamlit==1.40.2
+requests==2.32.3
