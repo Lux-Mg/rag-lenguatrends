@@ -15,10 +15,10 @@ def get_model():
 
 
 def embed_query(text: str) -> list[float]:
-    """e5 espera prefijo 'query: ' para queries (no 'passage: ')."""
+    """BGE-M3 no usa prefijos (a diferencia de e5)."""
     model = get_model()
     vec = model.encode(
-        [f"query: {text}"],
+        [text],
         normalize_embeddings=True,
         show_progress_bar=False,
     )[0]

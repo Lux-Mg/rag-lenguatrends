@@ -1,8 +1,8 @@
 """
-Genera embeddings (multilingual-e5-base, 768d) para todos los comentarios
+Genera embeddings (BAAI/bge-m3, 1024d) para todos los comentarios
 sin embedding. Reanudable: si se corta, vuelve a correr y sigue.
 
-Convención e5: prefijos "passage: " para documentos, "query: " para queries.
+BGE-M3 no requiere prefijos (a diferencia de e5).
 """
 import os
 import sys
@@ -56,7 +56,7 @@ def main():
             break
 
         ids   = [r[0] for r in rows]
-        texts = [f"passage: {r[1]}" for r in rows]
+        texts = [r[1] for r in rows]
         vecs  = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
 
         # UPDATE batch

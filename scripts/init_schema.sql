@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS comments (
     sentiment_score REAL,
     topic_label     VARCHAR(255),
     topic_prob      REAL,
-    embedding       vector(768)      -- multilingual-e5-base
+    embedding       vector(1024)     -- BAAI/bge-m3
 );
 
 -- Índices
