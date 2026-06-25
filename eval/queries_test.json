@@ -1,0 +1,59 @@
+[
+  {
+    "id": "q1_avatar_visuals_en",
+    "query": "Avatar visuals and special effects",
+    "expected_movies": ["Avatar: Fire and Ash"],
+    "language": null,
+    "use_case": "trends"
+  },
+  {
+    "id": "q2_mickey17_ru",
+    "query": "Как зрителям зашёл фильм Микки 17",
+    "expected_movies": ["Mickey 17"],
+    "language": "ru",
+    "use_case": "trends"
+  },
+  {
+    "id": "q3_sinners_horror_es",
+    "query": "Película de terror con vampiros y temática sureña",
+    "expected_movies": ["Sinners"],
+    "language": null,
+    "use_case": "recommend"
+  },
+  {
+    "id": "q4_mario_nostalgia",
+    "query": "Movies that feel nostalgic for childhood games",
+    "expected_movies": ["The Super Mario Galaxy Movie"],
+    "language": "en",
+    "use_case": "recommend"
+  },
+  {
+    "id": "q5_mission_impossible_action",
+    "query": "Intense action with practical stunts",
+    "expected_movies": ["Mission: Impossible - The Final Reckoning"],
+    "language": null,
+    "use_case": "recommend"
+  },
+  {
+    "id": "q6_thunderbolts_marvel_es",
+    "query": "Película de superhéroes de Marvel con equipo de antihéroes",
+    "expected_movies": ["Thunderbolts*"],
+    "language": "es",
+    "use_case": "recommend"
+  },
+  {
+    "id": "q7_lilo_stitch_family",
+    "query": "Family-friendly remake of a classic Disney movie",
+    "expected_movies": ["Lilo & Stitch"],
+    "language": null,
+    "use_case": "recommend"
+  },
+  {
+    "id": "q8_negative_sentiment_general",
+    "query": "películas que decepcionaron al público",
+    "expected_movies": [],
+    "language": null,
+    "use_case": "trends",
+    "note": "sin movie esperada — eval cualitativo del LLM, no recall"
+  }
+]

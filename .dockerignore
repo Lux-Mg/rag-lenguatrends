@@ -1,0 +1,17 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+.vscode/
+.idea/
+data/
+pgdata/
+eval/
+*.md
+README*
+Dockerfile
+docker-compose.yml
+scripts/ingest_corpus.py
+scripts/generate_embeddings.py

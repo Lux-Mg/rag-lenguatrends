@@ -1,0 +1,12 @@
+{
+  "recall": {
+    "recall@5": 0.7142857142857143,
+    "recall@10": 1.0,
+    "recall@30": 1.0
+  },
+  "judge": {
+    "grounded": 2.875,
+    "relevant": 4.25,
+    "honest": 3.875
+  }
+}

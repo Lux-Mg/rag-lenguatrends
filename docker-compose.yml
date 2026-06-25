@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag-lt-postgres
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag123
+      POSTGRES_DB: rag_lenguatrends
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag_lenguatrends"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

@@ -1,0 +1,23 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.ipynb_checkpoints/
+
+# datos crudos y caches de modelos
+data/*.csv
+data/*.parquet
+data/raw/
+models/
+
+# postgres volume (lo gestiona docker compose)
+pgdata/
+
+# IDE
+.vscode/
+.idea/
+
+# logs
+*.log
