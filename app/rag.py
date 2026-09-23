@@ -14,7 +14,7 @@ from app.db import get_conn
 from app.embeddings import embed_query
 
 OLLAMA_HOST  = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
 
 _llm = Client(host=OLLAMA_HOST)
 

@@ -21,7 +21,7 @@ curl -X POST http://localhost:8000/recommend \
   -d '{"query": "Intense action movie with practical stunts"}'
 ```
 
-Both endpoints share the same retrieval pipeline (`multilingual-e5-base` embeddings + `pgvector` cosine search); only the post-processing and the LLM prompt differ.
+Both endpoints share the current retrieval pipeline (`BAAI/bge-m3` embeddings + `pgvector` cosine search); only the post-processing and the LLM prompt differ.
 
 ## Results
 
@@ -36,8 +36,6 @@ Numbers below come from `eval/eval_rag.py --judge` over the 8 test queries in `e
 | LLM-as-judge — grounded (1–5) | **4.75** |
 | LLM-as-judge — relevant (1–5) | **5.00** |
 | LLM-as-judge — honest (1–5) | 4.00 |
-| End-to-end latency, warm | 7–12 s per request |
-| End-to-end latency, first request | ~90 s (BGE-M3 model load + Ollama warmup) |
 
 ### Stack upgrade — before vs after
 
@@ -45,8 +43,8 @@ The first version used `multilingual-e5-base` (768d) + `Qwen 2.5 7B`. After runn
 
 | | First version | Current |
 |---|---|---|
-| Embeddings | `intfloat/multilingual-e5-base` (768d) | **`BAAI/bge-m3`** (1024d, #1 on MTEB multilingual leaderboard) |
-| LLM | `qwen2.5:7b` | **`qwen3:8b`** (better structured output and grounding) |
+| Embeddings | `intfloat/multilingual-e5-base` (768d) | **`BAAI/bge-m3`** (1024d) |
+| LLM | `qwen2.5:7b` | **`qwen3:8b`** |
 | Recall@5 | 71.4% | **85.7%** (+14.3pp) |
 | Grounded (judge) | 2.88 | **4.75** (+1.87) |
 | Relevant (judge) | 4.25 | **5.00** (+0.75) |
@@ -55,7 +53,7 @@ A few things worth pointing out:
 
 - **The retriever finds the right movie in the top 5 for 6/7 queries.** The one miss (`"nostalgic childhood games"` → *Lilo & Stitch* / *Hoppers* outranking *Super Mario Galaxy*) shows the limit of pure semantic similarity — a hybrid BM25 + vector search would close it.
 - **The grounded score went from 2.88 to 4.75.** That single number is the bug the first version had: Qwen 2.5 7B drifted to the wrong movie in multi-movie context blocks. Qwen 3 8B stays anchored on the retrieved comments.
-- **LLM-as-judge is biased — same family judges itself.** I use the same Qwen 3 8B for generation *and* judging. The absolute numbers are softer than they would be under a stronger external judge (e.g. GPT-4o-mini); the deltas between configurations remain trustworthy.
+- **LLM-as-judge is biased — the same model family judges itself.** Qwen 3 8B is used for generation and judging, so both the absolute scores and the before/after deltas should be interpreted as small project measurements rather than external validation.
 
 ## Architecture
 
@@ -65,14 +63,14 @@ A few things worth pointing out:
 │                                                                  │
 │   ┌─────────────────┐    ┌──────────────────┐    ┌────────────┐  │
 │   │  Ollama service │◄───│   FastAPI app    │───▶│ Postgres   │  │
-│   │  Qwen 2.5 7B    │    │   /trends        │    │ +pgvector  │  │
+│   │  Qwen 3 8B      │    │   /trends        │    │ +pgvector  │  │
 │   │  port 11434     │    │   /recommend     │    │ port 5434  │  │
 │   └─────────────────┘    └──────────────────┘    └────────────┘  │
 │                                  │                      ▲        │
 │                                  ▼                      │        │
 │                          ┌─────────────────┐            │        │
-│                          │  e5-base        │            │        │
-│                          │  (768d, local)  │            │        │
+│                          │  BGE-M3         │            │        │
+│                          │  (1024d, local) │            │        │
 │                          └─────────────────┘            │        │
 │                                                         │        │
 │         ┌───────────────────────────────────────────────┘        │
@@ -84,7 +82,7 @@ A few things worth pointing out:
 
 A few things worth pointing out:
 
-- **Embeddings model is multilingual.** `intfloat/multilingual-e5-base` handles English, Spanish, and Russian out of the same vector space, so a Russian query retrieves Spanish comments if they're semantically close. This is the whole point — most off-the-shelf RAG demos are English-only.
+- **The current embedding model is multilingual.** `BAAI/bge-m3` places English, Spanish, and Russian text in the same vector space, so retrieval can cross languages when no language filter is supplied.
 - **The thesis DB is never touched.** The ingest script reads from the source Postgres (port 5432) and writes to an isolated container on port 5434. The source remains read-only.
 - **Two use cases, one retrieval.** Both endpoints call `retrieve()`; what differs is the prompt and the post-processing. `/recommend` adds an aggregation-by-movie step before sending context to the LLM. Keeping the pipeline shared makes the comparison between modes honest.
 
@@ -93,7 +91,7 @@ A few things worth pointing out:
 - **Python 3.12** — application code
 - **FastAPI + Pydantic + Uvicorn** — API layer
 - **Postgres 16 + pgvector 0.8** — vector store with IVFFlat cosine index (`probes=100`)
-- **sentence-transformers** + `BAAI/bge-m3` — 1024-dim multilingual embeddings (#1 on MTEB multilingual)
+- **sentence-transformers** + `BAAI/bge-m3` — 1024-dimensional multilingual embeddings
 - **Ollama + Qwen 3 8B** — local LLM, JSON-schema-constrained output for `/recommend`
 - **Docker Compose** — packages the Postgres container; the API runs in a venv for fast iteration, with a Dockerfile available for deployment
 
@@ -102,13 +100,13 @@ A few things worth pointing out:
 You need Ollama on the host with the model pulled (one-time):
 
 ```bash
-ollama pull qwen2.5:7b
+ollama pull qwen3:8b
 ```
 
 Then:
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Lux-Mg/rag-lenguatrends.git
 cd rag-lenguatrends
 cp .env.example .env          # edit SOURCE_DATABASE_URL to point at your data
 
@@ -128,7 +126,7 @@ streamlit run ui.py
 # Open:  http://localhost:8501
 ```
 
-Without the LenguaTrends source DB you can still run the stack — `ingest_corpus.py` is a no-op if the target is empty and there's no source. A small synthetic seed script is on the TODO list.
+Without a populated LenguaTrends source database, the services start but retrieval has no corpus to search. `ingest_corpus.py` exits without inserting data when the source is unavailable, and this repository does not include a synthetic seed dataset.
 
 ### The UI
 
@@ -146,7 +144,7 @@ The UI is intentionally a thin layer over the API — same calls you'd make from
 ├── app/
 │   ├── api.py             # FastAPI: /trends, /recommend, /health
 │   ├── rag.py             # retrieve() + trends() + recommend()
-│   ├── embeddings.py      # lazy-loaded e5-base wrapper
+│   ├── embeddings.py      # lazy-loaded BGE-M3 wrapper
 │   └── db.py              # pg connection context manager
 ├── scripts/
 │   ├── init_schema.sql    # pgvector + tables (runs on first container start)
@@ -191,7 +189,7 @@ In rough order of usefulness:
 
 1. **`pgvector` over Postgres is the cheap, boring, correct default for any RAG that doesn't need >1M vectors.** Adding it to an existing Postgres is a single `CREATE EXTENSION`. No new infra, no separate vector DB, joins with relational metadata just work.
 2. **Shared retrieval, divergent prompts beat duplicated pipelines.** Building `/trends` and `/recommend` as two callers of one `retrieve()` made the code half the size and forced honest design choices.
-3. **The e5 family wants prefixes.** `query:` for queries, `passage:` for documents. Skipping the prefix degrades retrieval quietly — there's no error, just worse results. Worth a comment in the code.
+3. **Embedding migrations affect both code and schema.** Moving from e5-base (768d with query/passage prefixes) to BGE-M3 (1024d without those prefixes) required re-embedding the corpus and changing the pgvector column dimension.
 4. **Multilingual embedding spaces are real.** A Russian query landing English-language comments isn't a bug, it's the design.
 5. **Schema-constrained JSON output keeps the API contract trustworthy.** `format={...}` in Ollama means the recommender always returns the same shape — no defensive parsing in the FastAPI layer.
 

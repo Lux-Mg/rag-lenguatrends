@@ -15,7 +15,7 @@ from tqdm import tqdm
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-MODEL_NAME   = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
+MODEL_NAME   = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 BATCH_SIZE   = 64
 
 if not DATABASE_URL:

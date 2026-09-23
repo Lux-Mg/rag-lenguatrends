@@ -2,7 +2,7 @@
 import os
 from sentence_transformers import SentenceTransformer
 
-MODEL_NAME = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
+MODEL_NAME = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 
 _model = None
 

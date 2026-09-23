@@ -21,7 +21,7 @@ load_dotenv(dotenv_path=ROOT / ".env")
 from app.rag import retrieve, trends, recommend
 
 OLLAMA_HOST  = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
 
 JUDGE_PROMPT = """You are evaluating a movie-comment RAG system.
 
